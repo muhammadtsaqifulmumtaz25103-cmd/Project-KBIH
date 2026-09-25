@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jadwal Kegiatan | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Jadwal Pelatihan</h1>
+  <p class="page-subtitle">Pilih jadwal yang sesuai, lalu daftarkan diri Anda selagi kuota masih tersedia.</p>
+
+  <div id="alertBox" class="alert"></div>
+
+  <div class="grid" id="daftarJadwal" style="grid-template-columns: 1fr; gap: 16px;"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  async function renderJadwal() {
+    const container = document.getElementById("daftarJadwal");
+    container.innerHTML = `<div class="empty-state">Memuat jadwal...</div>`;
+
+    let jadwalList = [];
+    let semuaKegiatan = [];
+    let pendaftaranSaya = [];
+    try {
+      [jadwalList, semuaKegiatan, pendaftaranSaya] = await Promise.all([
+        getJadwalList(),
+        getKegiatanList(),
+        getPendaftaranSaya(),
+      ]);
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state">Gagal memuat data: ${e.message}</div>`;
+      return;
+    }
+    const idJadwalSaya = pendaftaranSaya.map((p) => p.jadwalId);
+
+    if (jadwalList.length === 0) {
+      container.innerHTML = `<div class="empty-state">Belum ada jadwal yang tersedia saat ini.</div>`;
+      return;
+    }
+
+    container.innerHTML = jadwalList
+      .map((j) => {
+        const kegiatanTerkait = getKegiatanByIds(semuaKegiatan, j.kegiatanIds).map((k) => k.nama).join(", ");
+        const penuh = j.kuotaTerisi >= j.kuota;
+        const sudahDaftar = idJadwalSaya.includes(j.id);
+        const persen = Math.min(100, Math.round((j.kuotaTerisi / j.kuota) * 100));
+
+        let tombol;
+        if (sudahDaftar) {
+          tombol = `<span class="pill pill-aktif">Anda sudah terdaftar</span>`;
+        } else if (penuh) {
+          tombol = `<button class="btn btn-disabled" disabled>Kuota Penuh</button>`;
+        } else {
+          tombol = `<button class="btn btn-solid" onclick="handleDaftar('${j.id}')">Daftar Sekarang</button>`;
+        }
+
+        return `
+          <div class="card jadwal-item">
+            <div class="jadwal-info">
+              <h3>${formatTanggal(j.tanggalMulai)} &ndash; ${formatTanggal(j.tanggalSelesai)}</h3>
+              <p>📍 ${j.lokasi}</p>
+              <p>📖 Materi: ${kegiatanTerkait || "-"}</p>
+              <p>Kuota: ${j.kuotaTerisi} / ${j.kuota} peserta</p>
+              <div class="kuota-bar"><div class="kuota-fill" style="width:${persen}%"></div></div>
+            </div>
+            <div>${tombol}</div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  async function handleDaftar(jadwalId) {
+    hideAlert("alertBox");
+    try {
+      await daftarKeJadwal(jadwalId);
+      showAlert("alertBox", "Pendaftaran berhasil! Anda resmi terdaftar pada jadwal ini.", "success");
+      renderJadwal();
+    } catch (e) {
+      showAlert("alertBox", e.message, "error");
+    }
+  }
+
+  renderJadwal();
+</script>
+</body>
+</html>

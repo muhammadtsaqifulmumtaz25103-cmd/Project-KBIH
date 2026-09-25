@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tentang Balai | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle"></span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title" id="namaBalai">Tentang Balai Pelatihan</h1>
+  <p class="page-subtitle">Sejarah, visi-misi, serta informasi kontak balai pelatihan.</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="sejarah">Sejarah</button>
+    <button class="tab-btn" data-tab="visimisi">Visi &amp; Misi</button>
+    <button class="tab-btn" data-tab="kontak">Kontak &amp; Lokasi</button>
+  </div>
+
+  <div class="card">
+    <div class="tab-panel active" id="tab-sejarah">
+      <h3 class="mt-0">Sejarah</h3>
+      <p id="isiSejarah" class="text-muted"></p>
+    </div>
+
+    <div class="tab-panel" id="tab-visimisi">
+      <h3 class="mt-0">Visi</h3>
+      <p id="isiVisi" class="text-muted"></p>
+      <h3>Misi</h3>
+      <ul id="isiMisi" class="text-muted"></ul>
+    </div>
+
+    <div class="tab-panel" id="tab-kontak">
+      <h3 class="mt-0">Alamat</h3>
+      <p id="isiAlamat" class="text-muted"></p>
+      <h3>Kontak</h3>
+      <p id="isiKontak" class="text-muted"></p>
+      <h3>Jam Layanan</h3>
+      <p id="isiJam" class="text-muted"></p>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  async function muatProfil() {
+    let profil = {};
+    try {
+      profil = await getProfil();
+    } catch (e) {
+      console.error(e);
+    }
+    document.getElementById("namaBalai").textContent = profil.namaBalai || "Tentang Balai Pelatihan";
+    document.getElementById("isiSejarah").textContent = profil.sejarah || "-";
+    document.getElementById("isiVisi").textContent = profil.visi || "-";
+    document.getElementById("isiAlamat").textContent = profil.alamat || "-";
+    document.getElementById("isiKontak").textContent = profil.kontak || "-";
+    document.getElementById("isiJam").textContent = profil.jamLayanan || "-";
+
+    const misiEl = document.getElementById("isiMisi");
+    misiEl.innerHTML = "";
+    (profil.misi || []).forEach((m) => {
+      const li = document.createElement("li");
+      li.textContent = m;
+      misiEl.appendChild(li);
+    });
+  }
+  muatProfil();
+
+  // Tab switcher
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+    });
+  });
+</script>
+</body>
+</html>

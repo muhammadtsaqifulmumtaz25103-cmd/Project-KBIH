@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Benefit Program | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Benefit Mengikuti Pelatihan</h1>
+  <p class="page-subtitle">Manfaat yang akan Anda dapatkan setelah bergabung dan menyelesaikan pelatihan.</p>
+
+  <div class="grid grid-3" id="daftarBenefit"></div>
+
+  <div class="card text-center" style="margin-top: 32px;">
+    <h3 class="mt-0">Tertarik bergabung?</h3>
+    <p class="text-muted">Daftarkan diri Anda sekarang untuk mendapatkan seluruh benefit di atas.</p>
+    <a href="daftar.html" class="btn btn-solid">Daftar Sekarang</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  const iconList = ["🎓", "🧭", "🕌", "🤝", "🩺", "📜", "✨", "🌙"];
+  const container = document.getElementById("daftarBenefit");
+
+  async function init() {
+    container.innerHTML = `<div class="empty-state">Memuat data...</div>`;
+    let data = [];
+    try {
+      data = await getBenefitList();
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state">Gagal memuat data: ${e.message}</div>`;
+      return;
+    }
+
+    if (data.length === 0) {
+      container.innerHTML = `<div class="empty-state">Belum ada data benefit.</div>`;
+      return;
+    }
+
+    container.innerHTML = data
+      .map(
+        (b, i) => `
+        <div class="card">
+          <div style="font-size:1.8rem; margin-bottom:8px;">${iconList[i % iconList.length]}</div>
+          <h3 style="margin-top:0;">${b.judul}</h3>
+          <p class="text-muted">${b.deskripsi}</p>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  init();
+</script>
+</body>
+</html>

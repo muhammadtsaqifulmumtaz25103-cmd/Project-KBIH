@@ -1,0 +1,193 @@
+// Prisma schema — mengikuti ERD pada dokumen blueprint (Bagian 5)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatusKeanggotaan {
+  MENUNGGU_VERIFIKASI
+  AKTIF
+  DITOLAK
+  NONAKTIF
+}
+
+enum StatusPendaftaran {
+  PENDING
+  MENUNGGU_PEMBAYARAN
+  TERKONFIRMASI
+  DIBATALKAN
+}
+
+enum StatusPembayaran {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum StatusVerifikasiDokumen {
+  MENUNGGU
+  DISETUJUI
+  DITOLAK
+}
+
+enum StatusJadwal {
+  DIJADWALKAN
+  BERLANGSUNG
+  SELESAI
+  DIBATALKAN
+}
+
+model Role {
+  id       String    @id @default(uuid())
+  nama     String    @unique // ADMIN, PEMBINA, ANGGOTA
+  anggota  Anggota[]
+
+  @@map("role")
+}
+
+model Anggota {
+  id                 String            @id @default(uuid())
+  nik                String            @unique
+  namaLengkap        String            @map("nama_lengkap")
+  email              String            @unique
+  noHp               String            @map("no_hp")
+  passwordHash       String            @map("password_hash")
+  roleId             String            @map("role_id")
+  role               Role              @relation(fields: [roleId], references: [id])
+  statusKeanggotaan  StatusKeanggotaan @default(MENUNGGU_VERIFIKASI) @map("status_keanggotaan")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  dokumen      Dokumen[]
+  pendaftaran  Pendaftaran[]
+  sertifikat   Sertifikat[]
+
+  @@map("anggota")
+}
+
+model Dokumen {
+  id                String                  @id @default(uuid())
+  anggotaId         String                  @map("anggota_id")
+  anggota           Anggota                 @relation(fields: [anggotaId], references: [id])
+  jenisDokumen      String                  @map("jenis_dokumen") // KTP, KK, PAS_FOTO, dll
+  urlFile           String                  @map("url_file")
+  statusVerifikasi  StatusVerifikasiDokumen @default(MENUNGGU) @map("status_verifikasi")
+  createdAt         DateTime                @default(now()) @map("created_at")
+
+  @@map("dokumen")
+}
+
+model KategoriKegiatan {
+  id           String     @id @default(uuid())
+  namaKategori String     @map("nama_kategori")
+  kegiatan     Kegiatan[]
+
+  @@map("kategori_kegiatan")
+}
+
+model Kegiatan {
+  id          String            @id @default(uuid())
+  kategoriId  String            @map("kategori_id")
+  kategori    KategoriKegiatan  @relation(fields: [kategoriId], references: [id])
+  namaKegiatan String           @map("nama_kegiatan")
+  deskripsi   String
+  jenis       String            // TEORI, PRAKTIK, CERAMAH, dll
+  jadwal      JadwalKegiatan[]  @relation("JadwalKegiatanToKegiatan")
+
+  @@map("kegiatan")
+}
+
+model JadwalKegiatan {
+  id             String         @id @default(uuid())
+  tanggalMulai   DateTime       @map("tanggal_mulai")
+  tanggalSelesai DateTime       @map("tanggal_selesai")
+  kuota          Int
+  kuotaTerisi    Int            @default(0) @map("kuota_terisi")
+  lokasi         String
+  status         StatusJadwal   @default(DIJADWALKAN)
+  kegiatan       Kegiatan[]     @relation("JadwalKegiatanToKegiatan")
+  pendaftaran    Pendaftaran[]
+  sertifikat     Sertifikat[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@map("jadwal_kegiatan")
+}
+
+model Pendaftaran {
+  id             String            @id @default(uuid())
+  anggotaId      String            @map("anggota_id")
+  anggota        Anggota           @relation(fields: [anggotaId], references: [id])
+  jadwalId       String            @map("jadwal_id")
+  jadwal         JadwalKegiatan    @relation(fields: [jadwalId], references: [id])
+  status         StatusPendaftaran @default(PENDING)
+  tanggalDaftar  DateTime          @default(now()) @map("tanggal_daftar")
+  pembayaran     Pembayaran?
+
+  @@unique([anggotaId, jadwalId]) // 1 anggota tidak boleh daftar dobel ke jadwal yang sama
+  @@map("pendaftaran")
+}
+
+model Pembayaran {
+  id             String           @id @default(uuid())
+  pendaftaranId  String           @unique @map("pendaftaran_id")
+  pendaftaran    Pendaftaran      @relation(fields: [pendaftaranId], references: [id])
+  jumlah         Decimal          @db.Decimal(12, 2)
+  statusBayar    StatusPembayaran @default(PENDING) @map("status_bayar")
+  metode         String?
+  referensiExternal String?       @map("referensi_external") // ID transaksi dari payment gateway
+  tanggalBayar   DateTime?        @map("tanggal_bayar")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  @@map("pembayaran")
+}
+
+model Sertifikat {
+  id               String         @id @default(uuid())
+  anggotaId        String         @map("anggota_id")
+  anggota          Anggota        @relation(fields: [anggotaId], references: [id])
+  jadwalId         String         @map("jadwal_id")
+  jadwal           JadwalKegiatan @relation(fields: [jadwalId], references: [id])
+  nomorSertifikat  String         @unique @map("nomor_sertifikat")
+  urlFile          String         @map("url_file")
+  tanggalTerbit    DateTime       @default(now()) @map("tanggal_terbit")
+
+  @@map("sertifikat")
+}
+
+model BalaiProfil {
+  id        String    @id @default(uuid())
+  namaBalai String    @map("nama_balai")
+  sejarah   String
+  visiMisi  String    @map("visi_misi")
+  alamat    String
+  kontak    String
+  galeri    Galeri[]
+  benefit   Benefit[]
+
+  @@map("balai_profil")
+}
+
+model Galeri {
+  id          String      @id @default(uuid())
+  balaiId     String      @map("balai_id")
+  balai       BalaiProfil @relation(fields: [balaiId], references: [id])
+  urlGambar   String      @map("url_gambar")
+  keterangan  String?
+
+  @@map("galeri")
+}
+
+model Benefit {
+  id            String      @id @default(uuid())
+  balaiId       String      @map("balai_id")
+  balai         BalaiProfil @relation(fields: [balaiId], references: [id])
+  judulBenefit  String      @map("judul_benefit")
+  deskripsi     String
+
+  @@map("benefit")
+}

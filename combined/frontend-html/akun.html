@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akun Saya | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main id="mainContent">
+  <!-- Konten diisi oleh JavaScript setelah cek sesi login -->
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  const session = getSession();
+  const main = document.getElementById("mainContent");
+
+  async function muatAkun() {
+  if (!session) {
+    main.innerHTML = `
+      <div class="card text-center" style="max-width:480px; margin:40px auto;">
+        <h2 class="mt-0">Anda belum masuk</h2>
+        <p class="text-muted">Silakan masuk terlebih dahulu untuk melihat halaman akun Anda.</p>
+        <a href="login.html" class="btn btn-solid">Masuk Sekarang</a>
+      </div>
+    `;
+    return;
+  }
+
+  main.innerHTML = `<div class="empty-state">Memuat data akun...</div>`;
+
+  let anggota, pendaftaran;
+  try {
+    [anggota, pendaftaran] = await Promise.all([getAnggotaSaya(), getPendaftaranSaya()]);
+  } catch (e) {
+    main.innerHTML = `<div class="empty-state">Gagal memuat data: ${e.message}</div>`;
+    return;
+  }
+
+  {
+    const statusClass =
+      anggota.status === "Aktif" ? "pill-aktif" :
+      anggota.status === "Ditolak" ? "pill-ditolak" : "pill-menunggu";
+
+    main.innerHTML = `
+      <h1 class="page-title">Akun Saya</h1>
+      <p class="page-subtitle">Informasi keanggotaan dan riwayat pendaftaran jadwal pelatihan Anda.</p>
+
+      <div class="grid grid-2" style="margin-bottom: 28px;">
+        <div class="card">
+          <h3 class="mt-0">Data Diri</h3>
+          <p><strong>Nama:</strong> ${anggota.namaLengkap}</p>
+          <p><strong>Email:</strong> ${anggota.email}</p>
+          <p><strong>No. HP:</strong> ${anggota.noHp}</p>
+          <p><strong>NIK:</strong> ${anggota.nik}</p>
+        </div>
+        <div class="card">
+          <h3 class="mt-0">Status Keanggotaan</h3>
+          <p><span class="pill ${statusClass}">${anggota.status}</span></p>
+          <p class="text-muted" style="font-size:0.85rem;">
+            Terdaftar sejak ${formatTanggal(anggota.tanggalDaftar)}
+          </p>
+        </div>
+      </div>
+
+      <h2 style="font-size:1.2rem;">Riwayat Pendaftaran Jadwal</h2>
+      ${
+        pendaftaran.length === 0
+          ? `<div class="empty-state">Anda belum mendaftar ke jadwal pelatihan manapun. <a href="jadwal.html">Lihat jadwal &rarr;</a></div>`
+          : `
+        <table class="data-table">
+          <thead>
+            <tr><th>Tanggal Pelatihan</th><th>Lokasi</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            ${pendaftaran
+              .map(
+                (p) => `
+              <tr>
+                <td>${formatTanggal(p.jadwal.tanggalMulai)} &ndash; ${formatTanggal(p.jadwal.tanggalSelesai)}</td>
+                <td>${p.jadwal.lokasi}</td>
+                <td><span class="pill pill-aktif">${p.status}</span></td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `
+      }
+    `;
+  }
+  }
+
+  muatAkun();
+</script>
+</body>
+</html>

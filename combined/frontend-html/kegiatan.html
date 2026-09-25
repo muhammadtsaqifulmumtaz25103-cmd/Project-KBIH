@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar Kegiatan | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Daftar Kegiatan Pelatihan</h1>
+  <p class="page-subtitle">Materi dan kegiatan yang akan Anda ikuti selama masa pelatihan.</p>
+
+  <div class="tabs" id="filterKategori">
+    <button class="tab-btn active" data-kategori="Semua">Semua</button>
+  </div>
+
+  <div class="grid grid-3" id="daftarKegiatan"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  let semuaKegiatan = [];
+
+  function renderKegiatan(filter = "Semua") {
+    const container = document.getElementById("daftarKegiatan");
+    const data = filter === "Semua" ? semuaKegiatan : semuaKegiatan.filter((k) => k.kategori === filter);
+
+    if (data.length === 0) {
+      container.innerHTML = `<div class="empty-state">Tidak ada kegiatan pada kategori ini.</div>`;
+      return;
+    }
+
+    container.innerHTML = data
+      .map(
+        (k) => `
+        <div class="card">
+          <span class="badge">${k.kategori}</span>
+          <h3 style="margin-top:0;">${k.nama}</h3>
+          <p class="text-muted">${k.deskripsi}</p>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  async function init() {
+    const container = document.getElementById("daftarKegiatan");
+    container.innerHTML = `<div class="empty-state">Memuat data...</div>`;
+    try {
+      semuaKegiatan = await getKegiatanList();
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state">Gagal memuat data: ${e.message}</div>`;
+      return;
+    }
+
+    // Bangun tombol filter kategori otomatis dari data
+    const kategoriUnik = ["Semua", ...new Set(semuaKegiatan.map((k) => k.kategori))];
+    const filterEl = document.getElementById("filterKategori");
+    filterEl.innerHTML = kategoriUnik
+      .map((k, i) => `<button class="tab-btn ${i === 0 ? "active" : ""}" data-kategori="${k}">${k}</button>`)
+      .join("");
+
+    filterEl.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        filterEl.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderKegiatan(btn.dataset.kategori);
+      });
+    });
+
+    renderKegiatan();
+  }
+
+  init();
+</script>
+</body>
+</html>
