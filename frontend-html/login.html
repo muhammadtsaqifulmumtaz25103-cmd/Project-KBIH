@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="tentang.html">Tentang Balai</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <a href="benefit.html">Benefit</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title text-center">Masuk ke Akun</h1>
+  <p class="page-subtitle text-center">Masuk untuk mendaftar jadwal pelatihan dan melihat status keanggotaan.</p>
+
+  <div class="card form-card">
+    <div id="alertBox" class="alert"></div>
+
+    <form id="formLogin">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="nama@email.com" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-solid btn-block">Masuk</button>
+    </form>
+
+    <p class="text-center text-muted" style="margin-top:16px;">
+      Belum punya akun? <a href="daftar.html">Daftar di sini</a>
+    </p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><strong>KBIHU Aisyiyah</strong></div>
+    <div><a href="index.html">Kembali ke Beranda</a></div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  const formLogin = document.getElementById("formLogin");
+  formLogin.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideAlert("alertBox");
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    const submitBtn = formLogin.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memproses...";
+
+    try {
+      await loginAnggota(email, password);
+      window.location.href = "akun.html";
+    } catch (err) {
+      showAlert("alertBox", err.message, "error");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Masuk";
+    }
+  });
+</script>
+</body>
+</html>
