@@ -100,7 +100,7 @@ nav.nav-links a.active {
   cursor: pointer;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 1200px) {
   .nav-toggle { display: block; }
   nav.nav-links {
     display: none;
@@ -171,7 +171,9 @@ main {
   box-shadow: var(--shadow);
   padding: 20px;
   border: 1px solid var(--border);
+  cursor: pointer;
 }
+
 
 .grid {
   display: grid;
