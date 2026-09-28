@@ -28,7 +28,7 @@ export class KegiatanController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PEMBINA')
+  @Roles('ADMIN')
   @Post()
   create(@Body() dto: CreateKegiatanDto) {
     return this.kegiatanService.create(dto);

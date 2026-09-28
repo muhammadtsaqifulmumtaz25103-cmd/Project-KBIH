@@ -204,6 +204,7 @@ async function loginAnggota(email, password) {
       id: hasil.profil.id,
       nama: hasil.profil.nama,
       email: hasil.profil.email,
+      role: hasil.profil.role,
     });
     return hasil.profil;
   }
@@ -212,7 +213,12 @@ async function loginAnggota(email, password) {
   const anggotaList = dbGet(DB_KEYS.ANGGOTA, []);
   const anggota = anggotaList.find((a) => a.email === email && a.password === password);
   if (!anggota) throw new Error("Email atau password salah.");
-  dbSet(DB_KEYS.SESSION, { id: anggota.id, nama: anggota.namaLengkap, email: anggota.email });
+  dbSet(DB_KEYS.SESSION, {
+    id: anggota.id,
+    nama: anggota.namaLengkap,
+    email: anggota.email,
+    role: anggota.role || "ANGGOTA",
+  });
   return anggota;
 }
 
@@ -255,6 +261,33 @@ async function getKegiatanList() {
     return data.map(adaptKegiatanFromApi);
   }
   return dbGet(DB_KEYS.KEGIATAN, []);
+}
+
+async function getKategoriList() {
+  if (CONFIG.MODE === "api") return apiFetch("/kegiatan/kategori");
+  return [...new Set(dbGet(DB_KEYS.KEGIATAN, []).map((k) => ({ id: k.kategori, namaKategori: k.kategori })))];
+}
+
+async function tambahKegiatan(data) {
+  if (CONFIG.MODE === "api") {
+    return apiFetch("/kegiatan", { method: "POST", body: JSON.stringify(data) });
+  }
+  const kegiatan = { id: uid("keg"), nama: data.namaKegiatan, kategori: data.jenis, deskripsi: data.deskripsi };
+  const semua = dbGet(DB_KEYS.KEGIATAN, []);
+  semua.push(kegiatan);
+  dbSet(DB_KEYS.KEGIATAN, semua);
+  return kegiatan;
+}
+
+async function tambahJadwal(data) {
+  if (CONFIG.MODE === "api") {
+    return apiFetch("/jadwal", { method: "POST", body: JSON.stringify(data) });
+  }
+  const jadwal = { id: uid("jdw"), ...data, kuotaTerisi: 0, kegiatanIds: data.kegiatanIds || [], status: "Dijadwalkan" };
+  const semua = dbGet(DB_KEYS.JADWAL, []);
+  semua.push(jadwal);
+  dbSet(DB_KEYS.JADWAL, semua);
+  return jadwal;
 }
 
 function getKegiatanByIds(semuaKegiatan, ids) {

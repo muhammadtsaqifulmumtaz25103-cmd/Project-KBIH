@@ -11,6 +11,7 @@ function renderNavAkun() {
   if (session) {
     el.innerHTML = `
       <a href="akun.html">👤 ${session.nama.split(" ")[0]}</a>
+      ${session.role === "ADMIN" ? '<a href="admin.html">Admin</a>' : ""}
       <a href="#" id="btnLogout">Keluar</a>
     `;
     document.getElementById("btnLogout").addEventListener("click", (e) => {

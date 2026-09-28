@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin | KBIHU Aisyiyah</title>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="navbar">
+    <a href="index.html" class="brand"><span class="logo-circle">🕋</span> KBIHU Aisyiyah</a>
+    <button class="nav-toggle" id="navToggle">&#9776;</button>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html">Beranda</a>
+      <a href="jadwal.html">Jadwal Kegiatan</a>
+      <a href="kegiatan.html">Daftar Kegiatan</a>
+      <span id="navAkun" style="display:flex; gap:4px;"></span>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Panel Admin</h1>
+  <p class="page-subtitle">Tambahkan materi kegiatan dan jadwal pelatihan baru.</p>
+  <div id="alertBox" class="alert"></div>
+  <div class="grid grid-2">
+    <section class="card">
+      <h2>Tambah kegiatan / materi</h2>
+      <form id="formKegiatan">
+        <div class="form-group"><label for="namaKegiatan">Nama kegiatan</label><input id="namaKegiatan" required></div>
+        <div class="form-group"><label for="jenis">Jenis</label><select id="jenis" required></select></div>
+        <div class="form-group"><label for="deskripsi">Deskripsi</label><textarea id="deskripsi" rows="4" required></textarea></div>
+        <button class="btn btn-solid" type="submit">Simpan kegiatan</button>
+      </form>
+    </section>
+    <section class="card">
+      <h2>Tambah jadwal pelatihan</h2>
+      <form id="formJadwal">
+        <div class="form-group"><label for="tanggalMulai">Tanggal mulai</label><input type="date" id="tanggalMulai" required></div>
+        <div class="form-group"><label for="tanggalSelesai">Tanggal selesai</label><input type="date" id="tanggalSelesai" required></div>
+        <div class="form-group"><label for="kuota">Kuota peserta</label><input type="number" id="kuota" min="1" required></div>
+        <div class="form-group"><label for="lokasi">Lokasi</label><input id="lokasi" required></div>
+        <div class="form-group"><label for="kegiatanIds">Materi kegiatan</label><select id="kegiatanIds" multiple size="5"></select></div>
+        <button class="btn btn-solid" type="submit">Simpan jadwal</button>
+      </form>
+    </section>
+  </div>
+</main>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+  const session = getSession();
+  if (!session || session.role !== "ADMIN") window.location.href = "login.html";
+
+  const kategoriSelect = document.getElementById("jenis");
+  const kegiatanSelect = document.getElementById("kegiatanIds");
+
+  async function loadOptions() {
+    const [kategori, kegiatan] = await Promise.all([getKategoriList(), getKegiatanList()]);
+    kategoriSelect.innerHTML = kategori.map((item) => `<option value="${item.namaKategori}">${item.namaKategori}</option>`).join("");
+    kegiatanSelect.innerHTML = kegiatan.map((item) => `<option value="${item.id}">${item.nama}</option>`).join("");
+  }
+
+  document.getElementById("formKegiatan").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      const jenis = kategoriSelect.value;
+      const kategori = (await getKategoriList()).find((item) => item.namaKategori === jenis);
+      await tambahKegiatan({ kategoriId: kategori.id, namaKegiatan: document.getElementById("namaKegiatan").value.trim(), deskripsi: document.getElementById("deskripsi").value.trim(), jenis });
+      showAlert("alertBox", "Kegiatan berhasil ditambahkan.");
+      event.target.reset();
+      await loadOptions();
+    } catch (error) { showAlert("alertBox", error.message, "error"); }
+  });
+
+  document.getElementById("formJadwal").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await tambahJadwal({
+        tanggalMulai: document.getElementById("tanggalMulai").value,
+        tanggalSelesai: document.getElementById("tanggalSelesai").value,
+        kuota: Number(document.getElementById("kuota").value),
+        lokasi: document.getElementById("lokasi").value.trim(),
+        kegiatanIds: [...kegiatanSelect.selectedOptions].map((option) => option.value),
+      });
+      showAlert("alertBox", "Jadwal berhasil ditambahkan.");
+      event.target.reset();
+    } catch (error) { showAlert("alertBox", error.message, "error"); }
+  });
+
+  loadOptions().catch((error) => showAlert("alertBox", error.message, "error"));
+</script>
+</body>
+</html>

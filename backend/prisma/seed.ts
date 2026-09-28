@@ -32,6 +32,21 @@ async function main() {
     },
   });
 
+  const memberPasswordHash = await bcrypt.hash('Anggota123!', 10);
+  await prisma.anggota.upsert({
+    where: { email: 'anggota@balaihaji.go.id' },
+    update: {},
+    create: {
+      nik: '1111111111111111',
+      namaLengkap: 'Anggota Demo',
+      email: 'anggota@balaihaji.go.id',
+      noHp: '081211111111',
+      passwordHash: memberPasswordHash,
+      roleId: roleRecords['ANGGOTA'],
+      statusKeanggotaan: 'AKTIF',
+    },
+  });
+
   await prisma.balaiProfil.upsert({
     where: { id: 'seed-profil-utama' },
     update: {},
@@ -45,7 +60,13 @@ async function main() {
     },
   });
 
-  console.log('Seed selesai. Login admin: admin@balaihaji.go.id / Admin123!');
+  for (const namaKategori of ['TEORI', 'PRAKTIK', 'CERAMAH']) {
+    const existingCategory = await prisma.kategoriKegiatan.findFirst({ where: { namaKategori } });
+    if (!existingCategory) await prisma.kategoriKegiatan.create({ data: { namaKategori } });
+  }
+
+  console.log('Seed selesai. Admin: admin@balaihaji.go.id / Admin123!');
+  console.log('Seed selesai. Anggota: anggota@balaihaji.go.id / Anggota123!');
 }
 
 main()
